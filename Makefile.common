@@ -444,12 +444,14 @@ SOURCES_C   += $(VIDEODIR_GLIDE)/Glitch64/glitch64_combiner.c \
             $(VIDEODIR_GLIDE)/Glitch64/glitch64_textures.c
 endif
 
+ifeq ($(HAVE_THR_AL), 1)
+CFLAGS      += -DHAVE_THR_AL
+CXXFLAGS    += -DHAVE_THR_AL
 ### Angrylion's renderer ###
-SOURCES_CXX += \
-				  $(VIDEODIR_ANGRYLION)/interface.cpp \
-				  $(VIDEODIR_ANGRYLION)/parallel_al.cpp
-SOURCES_C +=  $(VIDEODIR_ANGRYLION)/n64video.c \
-				  $(VIDEODIR_ANGRYLION)/screen.c 
+SOURCES_CXX += $(VIDEODIR_ANGRYLION)/parallel_al.cpp
+SOURCES_C   += $(VIDEODIR_ANGRYLION)/interface.c \
+				   $(VIDEODIR_ANGRYLION)/n64video.c
+endif
 
 ifeq ($(HAVE_PARALLEL),1)
 CFLAGS   += -DHAVE_PARALLEL
@@ -482,6 +484,11 @@ endif
 ifeq ($(HAVE_PARALLEL_RSP), 1)
 ### Tiny Tiger's LLE RSP JIT ###
    PARALLEL_RSP_ARCH := x86_64
+
+ifeq ($(WANT_LLVM_OVERRIDE), 1)
+	INCFLAGS += -I/usr/lib/llvm-$(LLVM_VERSION)/include
+endif
+
    SOURCES_CXX += \
 				$(RSPDIR_PARALLEL)/parallel.cpp \
 				$(RSPDIR_PARALLEL)/rsp.cpp \
@@ -492,6 +499,7 @@ ifeq ($(HAVE_PARALLEL_RSP), 1)
 	CXXFLAGS += -DHAVE_PARALLEL_RSP -DPARALLEL_INTEGRATION
 ifeq ($(DEBUG_JIT), 1)
 	CXXFLAGS += -DDEBUG_JIT
+	LDFLAGS += -ldl -rdynamic
 	SOURCES_CXX += $(RSPDIR_PARALLEL)/debug_jit.cpp
 else
 	SOURCES_CXX += $(RSPDIR_PARALLEL)/jit.cpp
@@ -500,23 +508,30 @@ ifeq ($(INTENSE_DEBUG), 1)
 	CFLAGS += -DINTENSE_DEBUG
 	CXXFLAGS += -DINTENSE_DEBUG
 endif
-LDFLAGS += -lclangFrontend \
-			  -lclangSerialization \
-			  -lclangDriver \
-			  -lclangCodeGen \
-			  -lclangParse \
-			  -lclangSema \
-			  -lclangStaticAnalyzerFrontend \
-			  -lclangStaticAnalyzerCheckers \
-			  -lclangStaticAnalyzerCore \
-			  -lclangAnalysis \
-			  -lclangRewriteFrontend \
-			  -lclangRewrite \
-			  -lclangEdit \
-			  -lclangAST \
-			  -lclangLex \
-			  -lclangBasic
-LDFLAGS += $(shell llvm-config --ldflags --libs --system-libs)
+LDFLAGS += -lclangFrontendTool \
+	   -lclangFrontend \
+	   -lclangDriver \
+	   -lclangSerialization \
+	   -lclangCodeGen \
+	   -lclangFrontend \
+	   -lclangParse \
+	   -lclangSema \
+	   -lclangStaticAnalyzerFrontend \
+	   -lclangStaticAnalyzerCheckers \
+	   -lclangStaticAnalyzerCore \
+	   -lclangAnalysis \
+	   -lclangRewriteFrontend \
+	   -lclangRewrite \
+	   -lclangEdit \
+	   -lclangASTMatchers \
+	   -lclangAST \
+	   -lclangLex \
+	   -lclangBasic
+ifeq ($(WANT_LLVM_OVERRIDE), 1)
+LDFLAGS += $(shell llvm-config-$(LLVM_VERSION) --ldflags --libs --link-static --system-libs)
+else
+LDFLAGS += $(shell llvm-config --ldflags --libs --link-static --system-libs)
+endif
 
 endif
 

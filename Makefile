@@ -11,9 +11,10 @@ GLIDEN64ES=0
 HAVE_RSP_DUMP=0
 HAVE_RDP_DUMP=0
 HAVE_RICE=1
-HAVE_PARALLEL=1
+HAVE_PARALLEL=0
 HAVE_PARALLEL_RSP=0
 STATIC_LINKING=0
+WANT_LLVM_OVERRIDE=0
 
 DYNAFLAGS :=
 INCFLAGS  :=
@@ -113,6 +114,7 @@ ifneq (,$(findstring unix,$(platform)))
    fpic = -fPIC
 
 	HAVE_THR_AL=1
+	LDFLAGS += -lpthread
 
 #ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 #ifeq ($(HAVE_PARALLEL), 1)
@@ -289,7 +291,7 @@ else ifneq (,$(findstring osx,$(platform)))
    LDFLAGS += -stdlib=libc++
    fpic = -fPIC
 
-HAVE_THR_AL=1
+	HAVE_THR_AL=1
    HAVE_PARALLEL=0
    PLATCFLAGS += -D__MACOSX__ -DOSX
    GL_LIB := -framework OpenGL
@@ -316,16 +318,25 @@ else ifneq (,$(findstring ios,$(platform)))
    PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
    PLATCFLAGS += -DIOS -marm
    CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT
-   CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
    LDFLAGS += -dynamiclib
-   HAVE_NEON=1
 
    fpic = -fPIC
    GL_LIB := -framework OpenGLES
-
-   CC = clang -arch armv7 -isysroot $(IOSSDK)
+   ifeq ($(platform),ios-arm64)
+      CC = clang -arch arm64 -isysroot $(IOSSDK)
+      CXX = clang++ -arch arm64 -isysroot $(IOSSDK)
+      CFLAGS += -DDONT_WANT_ARM_OPTIMIZATIONS
+      FORCE_GLES=1
+      CXXFLAGS += -Wc++11-extensions -std=c++11 -stdlib=libc++ -Wc++11-long-long
+      CPUFLAGS += -marm -mfpu=neon -mfloat-abi=softfp
+      HAVE_NEON=0
+   else
+      CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
+      CC = clang -arch armv7 -isysroot $(IOSSDK)
+      CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
+      HAVE_NEON=1
+   endif
    CC_AS = perl ./tools/gas-preprocessor.pl $(CC)
-   CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
    ifeq ($(platform),ios9)
       CC         += -miphoneos-version-min=8.0
       CC_AS      += -miphoneos-version-min=8.0
@@ -469,7 +480,7 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	CC  = cl.exe
 	CXX = cl.exe
 	CC_AS = nasm.exe
-        ASFLAGS += -f win64
+	ASFLAGS += -f win64
 	GL_LIB = opengl32.lib
 	HAVE_PARALLEL=0
 	HAVE_PARALLEL_RSP=0
@@ -478,7 +489,7 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	reg_query = $(call filter_out2,$(subst $2,,$(shell reg query "$2" -v "$1" 2>nul)))
 	fix_path = $(subst $(SPACE),\ ,$(subst \,/,$1))
 
-	ProgramFiles86w := $(shell cmd /c "echo %PROGRAMFILES(x86)%")
+	ProgramFiles86w := $(shell cmd //c "echo %PROGRAMFILES(x86)%")
 	ProgramFiles86 := $(shell cygpath "$(ProgramFiles86w)")
 
 	WindowsSdkDir ?= $(call reg_query,InstallationFolder,HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0)
@@ -894,7 +905,9 @@ else ifeq ($(HAVE_PARALLEL), 1)
    endif
 else ifeq (,$(findstring msvc,$(platform)))
     CFLAGS   += -MMD
-    CXXFLAGS += -std=c++98 -MMD
+    ifneq ($(platform),ios-arm64)
+        CXXFLAGS += -std=c++98 -MMD
+    endif
 endif
 ifeq ($(GLIDEN64ES),1)
    CFLAGS   += -DGLIDEN64ES
@@ -970,7 +983,6 @@ endif
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< $(OBJOUT)$@
-
 
 clean:
 	rm -f $(OBJECTS) $(TARGET) $(OBJECTS:.o=.d)

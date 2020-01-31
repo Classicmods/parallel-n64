@@ -489,9 +489,6 @@ static const uint64_t lut_cpop[][2] = {
    { 0x51D29418D5B46AE3ULL, 1 }, /* San Francisco Rush 2049 (E) (M6) [!] */
    { 0xB9A9ECA217AAE48EULL, 1 }, /* San Francisco Rush 2049 (U) [!] */
    { 0x315C74663A453265ULL, 1 }, /* Star Soldier - Vanishing Earth (J) [!] [ALECK64] */
-   { 0x53ED2DC406258002ULL, 1 }, /* Star Wars Episode I - Racer (E) (M3) [!] */
-   { 0x61F5B152046122ABULL, 1 }, /* Star Wars Episode I - Racer (J) [!] */
-   { 0x72F703986556A98BULL, 1 }, /* Star Wars Episode I - Racer (U) [!] */
    { 0x60C437E5A2251EE3ULL, 1 }, /* Shadow Man (E) (M3) [!] */
    { 0xEA06F8C307C2DEEDULL, 1 }, /* Shadow Man (F) [!] */
    { 0x84D5FD75BBFD3CDFULL, 1 }, /* Shadow Man (G) [!] */
@@ -507,12 +504,6 @@ static const uint64_t lut_cpop[][2] = {
    { 0xA150743ECF2522CDULL, 1 }, /* Toy Story 2 (U) [!] */
    { 0xFE4B6B43081D29A7ULL, 1 }, /* Triple Play 2000 (U) [!] */
    { 0x28D5562DE4D5AE50ULL, 1 }, /* Uchhannanchan no Hono no Challenger - Denryu IraIra Bou (J) [!] */
-   { 0x151F79F48EEDC8E5ULL, 1 }, /* Vigilante 8 (E) [!] */
-   { 0xE2BC82A2591CD694ULL, 1 }, /* Vigilante 8 (F) [!] */
-   { 0x6EDA5178D396FEC1ULL, 1 }, /* Vigilante 8 (G) [!] */
-   { 0xEA71056AE4214847ULL, 1 }, /* Vigilante 8 (U) [!] */
-   { 0xDD10BC7EF900B351ULL, 1 }, /* Vigilante 8 - 2nd Offence (E) [!] */
-   { 0xF5C5866D052713D9ULL, 1 }, /* Vigilante 8 - 2nd Offense (U) [!] */
    { 0x98F9F2D003D9F09CULL, 1 }, /* Virtual Pool 64 (E) [!] */
    { 0x4E4A7643A37439D7ULL, 1 }, /* Virtual Pool 64 (U) [!] */
    { 0x2F57C9F7F1E29CA6ULL, 1 }, /* Vivid Dolls (J) [ALECK64] */
@@ -527,4 +518,6 @@ static const uint64_t lut_cpop[][2] = {
    { 0x54310E7D6B5430D8ULL, 1 }, /* Wipeout 64 (E) [!] */
    { 0x132D2732C70E9118ULL, 1 }, /* Wipeout 64 (U) [!] */
    { 0x9F8B96C3A01194DCULL, 1 }, /* Yakouchuu II - Satsujin Kouro (J) */
+   { 0x0553AE9DEAD8E0C1ULL, 3 }, /* Xena Warrior Princess - The Talisman of Fate (U) [!] */
+   { 0x0A1667C7293346A6ULL, 3 }, /* Xena Warrior Princess - The Talisman of Fate (E) [!] */
 };

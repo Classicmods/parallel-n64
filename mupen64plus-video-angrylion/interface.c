@@ -5,53 +5,32 @@
 #include <string.h>
 #include <ctype.h>
 #include <boolean.h>
-#include "common.h"
-#include "screen.h"
-#include "n64video.h"
+
 #include "m64p_plugin.h"
 
-#ifdef __cplusplus
-extern "C" {
 extern void DebugMessage(int level, const char *message, ...);
-#endif
 
 #include "Gfx #1.3.h"
-
+#include "common.h"
+#include "n64video.h"
 #include "m64p_types.h"
 #include "m64p_config.h"
+#include "vdac.h"
 
 int retro_return(bool just_flipping);
 
-#ifdef __cplusplus
-}
-#endif
-
 #define DP_INTERRUPT    0x20
 
-static unsigned angrylion_filtering = 0;
-static unsigned angrylion_dithering = 1;
-static unsigned angrylion_vi = 0;
-static unsigned angrylion_threads = 0;
-static unsigned angrylion_overscan = 1;
 static bool angrylion_init = false;
 
 int ProcessDListShown = 0;
 
 extern GFX_INFO gfx_info;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern uint32_t *blitter_buf_lock;
 extern unsigned int screen_width, screen_height;
 extern uint32_t screen_pitch;
 
-static struct n64video_config config={{VI_MODE_NORMAL,VI_INTERP_LINEAR,false,false},true,0};
-
-#include <ctype.h>
-
-
+struct n64video_config config;
 
 void plugin_init(void)
 {
@@ -154,52 +133,26 @@ uint32_t plugin_get_rom_name(char* name, uint32_t name_size)
     return i;
 }
 
-
-void screen_swap(bool blank)
+void vdac_init(struct n64video_config* config) { }
+void vdac_read(struct frame_buffer* fb, bool alpha) { }
+void vdac_write(struct frame_buffer* fb)
 {
-   if(blank)
-   memset(blitter_buf_lock,0,625*640*sizeof(uint32_t));
+   screen_width = fb->width;
+   screen_height = fb->height;
+   screen_pitch = fb->pitch * 4;
 }
 
-void screen_init(struct n64video_config* config)
-{
+void vdac_sync(bool invalid) { 
+retro_return(!invalid);
 }
-
-void screen_read(struct frame_buffer* buffer, bool alpha)
-{}
-
-void screen_set_fullscreen(bool _fullscreen)
-{}
-
-bool screen_get_fullscreen(void)
-{
-   return false;
-}
-
-void screen_close(void)
-{}
-
-
-void screen_write(struct frame_buffer* buffer, int32_t output_height)
-{
-    memcpy(blitter_buf_lock, buffer->pixels, screen_width*screen_height * sizeof(uint32_t));
-    screen_width = buffer->width;
-    screen_height = buffer->height;
-    screen_pitch = buffer->pitch * 4;
-}
-
-
-unsigned angrylion_get_vi(void)
-{
-   return config.vi.mode;
-}
+void vdac_close(void) { }
 
 void angrylion_set_vi(unsigned value)
 {
  
-   if(config.vi.mode != (vi_mode)value)
+   if(config.vi.mode != (enum vi_mode)value)
    {
-      config.vi.mode = (vi_mode)value;
+      config.vi.mode = (enum vi_mode)value;
       if (angrylion_init)
       {
           n64video_close();
@@ -225,67 +178,108 @@ void angrylion_set_threads(unsigned value)
 
 void angrylion_set_overscan(unsigned value)
 {
-  
-    if(config.vi.hide_overscan != (bool)value)
-    
-    {
-    config.vi.hide_overscan = (bool)value;
-    if (angrylion_init)
-    {
-        n64video_close();
-        n64video_init(&config);
-    }
-    }
+   if(config.vi.hide_overscan != (bool)value)
+   {
+      config.vi.hide_overscan = (bool)value;
+      if (angrylion_init)
+      {
+         n64video_close();
+         n64video_init(&config);
+      }
+   }
     
 }
 
-unsigned angrylion_get_threads()
+void angrylion_set_vi_dedither(unsigned value)
 {
-    return  config.num_workers;
+   if(config.vi.vi_dedither != (bool)value)
+   {
+      config.vi.vi_dedither = (bool)value;
+      if (angrylion_init)
+      {
+         n64video_close();
+         n64video_init(&config);
+      }
+   }
+    
+}
+
+void angrylion_set_vi_blur(unsigned value)
+{
+   if(config.vi.vi_blur != (bool)value)
+   {
+      config.vi.vi_blur = (bool)value;
+      if (angrylion_init)
+      {
+         n64video_close();
+         n64video_init(&config);
+      }
+   }
+    
+}
+
+void angrylion_set_synclevel(unsigned value)
+{
+   if(config.dp.compat != (enum dp_compat_profile)value)
+   {
+      config.dp.compat= (enum dp_compat_profile)value;
+      if (angrylion_init)
+      {
+         n64video_close();
+         n64video_init(&config);
+      }
+   }
+}
+
+unsigned angrylion_get_synclevel()
+{
+    return config.dp.compat;
+}
+
+unsigned angrylion_get_threads(void)
+{
+   return  config.num_workers;
+}
+
+
+unsigned angrylion_get_vi(void)
+{
+   return config.vi.mode;
 }
 
 void angrylion_set_filtering(unsigned filter_type)
 {
-    if(filter_type!=2)filter_type=1;
-    else
-    filter_type=0;
-    if(config.vi.interp != (vi_interp)filter_type)
-    {
-    config.vi.interp = (vi_interp)filter_type;
-    if (angrylion_init)
-    {
-        n64video_close();
-        n64video_init(&config);
-    }
-    }
+   if (filter_type != 2)
+      filter_type=1;
+   else
+      filter_type=0;
+
+   if(config.vi.interp != (enum vi_interp)filter_type)
+   {
+      config.vi.interp = (enum vi_interp)filter_type;
+      if (angrylion_init)
+      {
+         n64video_close();
+         n64video_init(&config);
+      }
+   }
 }
 
-unsigned angrylion_get_filtering()
+unsigned angrylion_get_filtering(void)
 {
     return  (unsigned)config.vi.interp;
 }
 
 void angrylion_set_dithering(unsigned dither_type)
 {
-   angrylion_dithering = dither_type;
+   config.dithering    = dither_type;
 }
 
-unsigned angrylion_get_dithering(void)
-{
-   return angrylion_dithering;
-}
+void angrylionChangeWindow (void) { }
 
-void angrylionChangeWindow (void)
-{
-}
-
-void angrylionReadScreen2(void *dest, int *width, int *height, int front)
-{
-}
+void angrylionReadScreen2(void *dest, int *width, int *height, int front) { }
  
-void angrylionDrawScreen (void)
-{
-}
+void angrylionDrawScreen (void) { }
 
 void angrylionGetDllInfo(PLUGIN_INFO* PluginInfo)
 {
@@ -298,20 +292,15 @@ void angrylionGetDllInfo(PLUGIN_INFO* PluginInfo)
     PluginInfo -> MemoryBswaped = true;
 }
 
-void angrylionSetRenderingCallback(void (*callback)(int))
-{
-}
+void angrylionSetRenderingCallback(void (*callback)(int)) { }
 
 int angrylionInitiateGFX (GFX_INFO Gfx_Info)
 {
+   n64video_config_init(&config);
    return 0;
 }
-
  
-void angrylionMoveScreen (int xpos, int ypos)
-{
-}
-
+void angrylionMoveScreen (int xpos, int ypos) { }
  
 void angrylionProcessDList(void)
 {
@@ -331,6 +320,7 @@ void angrylionRomClosed (void)
 
 int angrylionRomOpen(void)
 {
+
    /* TODO/FIXME: For now just force it to 640x480.
     *
     * Later on we might want a low-res mode (320x240)
@@ -348,8 +338,19 @@ int angrylionRomOpen(void)
       screen_height = 480;
 
    screen_pitch  = 640 << 2;
+
+  config.gfx.rdram       = plugin_get_rdram();
+  config.gfx.rdram_size  = plugin_get_rdram_size();
+
+  config.gfx.dmem        = plugin_get_dmem();
+  config.gfx.mi_intr_reg = (uint32_t*)gfx_info.MI_INTR_REG;
+  config.gfx.mi_intr_cb  = gfx_info.CheckInterrupts;
+
+  config.gfx.vi_reg      = plugin_get_vi_registers();
+  config.gfx.dp_reg      = plugin_get_dp_registers();
+
    n64video_init(&config);
-   angrylion_init = true;
+   angrylion_init        = true;
    return 1;
 }
 
@@ -362,34 +363,24 @@ void angrylionUpdateScreen(void)
     counter = 0;
 #endif
     n64video_update_screen();
-    retro_return(true);
+    
 }
 
 void angrylionShowCFB (void)
 {
-    angrylionUpdateScreen();
+   angrylionUpdateScreen();
 }
 
 
-void angrylionViStatusChanged (void)
-{
-}
+void angrylionViStatusChanged (void) { }
 
-void angrylionViWidthChanged (void)
-{
-}
+void angrylionViWidthChanged (void) { }
 
-void angrylionFBWrite(unsigned int addr, unsigned int size)
-{
-}
+void angrylionFBWrite(unsigned int addr, unsigned int size) { }
 
-void angrylionFBRead(unsigned int addr)
-{
-}
+void angrylionFBRead(unsigned int addr) { }
 
-void angrylionFBGetFrameBufferInfo(void *pinfo)
-{
-}
+void angrylionFBGetFrameBufferInfo(void *pinfo) { }
 
 m64p_error angrylionPluginGetVersion(m64p_plugin_type *PluginType, int *PluginVersion, int *APIVersion, const char **PluginNamePtr, int *Capabilities)
 {
@@ -448,7 +439,3 @@ void msg_debug(const char* err, ...)
 
    DebugMessage(M64MSG_INFO, "%s", buffer);
 }
-
-#ifdef __cplusplus
-}
-#endif
