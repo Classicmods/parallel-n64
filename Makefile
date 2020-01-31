@@ -200,6 +200,7 @@ ifneq (,$(findstring unix,$(platform)))
       GL_LIB := -lGLESv2
       HAVE_NEON = 1
       WITH_DYNAREC=arm
+      USE_SSE2NEON=1
       ASFLAGS += -D__ARM_NEON__ -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
       CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE -DARM_FIX -DCLASSIC
       CPUFLAGS += -Ofast \
@@ -228,6 +229,7 @@ ifneq (,$(findstring classic_armv8_a35, $(platform)))
 	GL_LIB := -lGLESv2
 	HAVE_NEON = 1
 	WITH_DYNAREC=arm
+	USE_SSE2NEON=1
 	ASFLAGS += -D__ARM_NEON__ -marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard
 	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE -DARM_FIX -DCLASSIC
 	CPUFLAGS += -Ofast \
