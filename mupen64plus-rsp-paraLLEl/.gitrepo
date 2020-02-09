@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/Themaister/parallel-rsp.git
 	branch = master
-	commit = b1b3839c7c3f1440e12131775ff785ae07bcd46e
-	parent = dbdea196d7656bb3f25eb052ea707f5c6c7176c9
+	commit = efbf80b24f2fa56d20ae0f92d2ac30d249f72eb2
+	parent = 42cba55909850bbcc648d7c6105769447387073c
 	method = rebase
 	cmdver = 0.4.0
