@@ -16,7 +16,7 @@ before_script:
   - docker login -u ${GITLAB_USER} -p ${GITLAB_PASS} registry.gitlab.com
   - docker pull ${IMAGE}
   - docker run -it -d --name crosscomp ${IMAGE} bash
-  - docker exec -it --privileged crosscomp bash -c "git clone --depth=50 --branch=master https://github.com/${TRAVIS_REPO_SLUG} ${TRAVIS_REPO_SLUG}"
+  - docker exec -it --privileged crosscomp bash -c "git clone --depth=50 --recursive --branch=master https://github.com/${TRAVIS_REPO_SLUG} ${TRAVIS_REPO_SLUG}"
 
 script:
   - docker exec -it --privileged crosscomp bash -c "cd ${TRAVIS_REPO_SLUG} && classic_make_${TARGET} Makefile clean"
